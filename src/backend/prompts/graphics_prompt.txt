@@ -1,0 +1,6 @@
+# Grafiken:
+- Magentafarbene nummerierte Rahmen auf der Folie markieren verfügbare Grafiken. Die Nummer steht im kleinen magentafarbenen Kästchen am Rahmen.
+- Du kannst eine markierte Grafik in eine Karte einbetten, indem du an der gewünschten Stelle im Markdown schreibst: ![kurze Beschreibung](grafik:<nummer>), z. B. ![Iceberg-Architektur](grafik:0)
+- Platziere die Referenz genau dort, wo die Grafik inhaltlich hingehört (meist auf der Rückseite als Teil der Antwort).
+- Binde eine Grafik nur ein, wenn sie echten Lernmehrwert bietet (Diagramm, Tabelle, Schema) — nicht bei Dekoration oder wenn Text allein ausreicht. Also keine unnötigen Logos oder Grafiken, die keinen inhaltlichen Mehrwert bieten, der auf die Frage auf der Vorderseite genannt werden sollte.
+- Verwende nur Nummern, die tatsächlich auf der Folie markiert sind.

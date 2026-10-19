@@ -1,0 +1,29 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets
+.env
+
+# Debug-Ausgaben der Grafik-Extraktion
+data/debug_graphics/
+
+# Kartenbestand (Prüfstatus + Datensatz-Läufe inkl. Folienbilder)
+data/cards/
+
+# Fertiger Trainingsdatensatz (aus data/cards/dataset/ erzeugt)
+data/training/
+
+#PDFs
+data/pdf/
+
+# Issues und PRDs des lokalen Issue-Trackers
+.scratch/
+
