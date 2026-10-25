@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from backend import anki, batch, schemas
 from backend.storage import CardStorage
-from backend.config import Settings
+from backend.config import Settings, get_settings
 from backend.schemas import flashcard
 from backend.main import app
 
@@ -27,6 +27,17 @@ def test_generate_route_forwards_feedback_to_llm():
     assert mock.call_args.kwargs["feedback"] == "shorter"
     # Without graphics the slide is rendered unmarked.
     assert mock_image.call_args.kwargs["mark_graphics"] is False
+
+
+def test_generate_route_without_api_key_explains_instead_of_crashing(monkeypatch):
+    monkeypatch.setenv("PROVIDER_API_KEY", "")
+    get_settings.cache_clear()
+    with patch("backend.main.llm.generate_cards") as mock_llm:
+        resp = client.post("/generate", json={"pdf_name": "x.pdf", "page": 1})
+
+    assert resp.status_code == 400
+    assert "API-Key" in resp.json()["detail"]
+    mock_llm.assert_not_called()
 
 
 def test_generate_route_returns_graphics_and_marks_slide():

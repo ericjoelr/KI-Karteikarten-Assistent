@@ -198,9 +198,20 @@ def generate(req: GenerateRequest) -> GenerateResponse:
             ),
         )
 
+    # Without a key the OpenAI client fails with a bare 500 — say what to do
+    # instead. Local providers always carry a placeholder key.
+    settings = get_settings()
+    if not settings.provider_api_key:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Kein API-Key hinterlegt. Bitte oben über den Anbieter-Knopf einen Key "
+                "eintragen oder CLOUD_API_KEY und PROVIDER_API_KEY in der .env setzen."
+            ),
+        )
+
     # Graphics mode off: no extraction, an unmarked image and a prompt without
     # the GRAFIKEN section — the second frozen input contract.
-    settings = get_settings()
     mode = settings.graphics_mode(req.graphics)
     image, graphics = pdf.get_model_input(req.pdf_name, req.page, graphics=mode)
     generated = llm.generate_cards(image, graphics=mode, feedback=req.feedback)

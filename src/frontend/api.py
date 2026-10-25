@@ -135,8 +135,9 @@ def generate_cards(pdf_name: str, page: int, graphics: bool, feedback: str | Non
         "/generate",
         json={"pdf_name": pdf_name, "page": page, "feedback": feedback, "graphics": graphics},
     )
-    # 409 = cards of this slide are already in Anki (regenerating is blocked).
-    if resp.status_code == 409:
+    # 400 = no API key configured; 409 = cards of this slide are already in
+    # Anki (regenerating is blocked).
+    if resp.status_code in (400, 409):
         raise RuntimeError(resp.json()["detail"])
     resp.raise_for_status()
 

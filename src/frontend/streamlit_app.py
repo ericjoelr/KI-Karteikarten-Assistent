@@ -361,11 +361,15 @@ with col_review:
                 "KI analysiert Folie und erstellt Karten..."
             ):
 
-                generate_cards(
-                    st.session_state.pdf_name,
-                    st.session_state.current_page,
-                    st.session_state.graphics_enabled,
-                )
+                try:
+                    generate_cards(
+                        st.session_state.pdf_name,
+                        st.session_state.current_page,
+                        st.session_state.graphics_enabled,
+                    )
+                except RuntimeError as exc:
+                    st.error(str(exc))
+                    st.stop()
 
             st.rerun()
 

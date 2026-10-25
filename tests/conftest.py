@@ -11,11 +11,12 @@ def temp_card_dirs(tmp_path, monkeypatch):
     otherwise the redirect does not take effect, or sticks around for later
     tests. The graphics mode is pinned to its code default, so a local .env
     that switches it off (fine-tuned model) cannot flip the tests;
-    the model is pinned so the tests pass on a fresh clone without a .env.
+    model and API key are pinned so the tests pass on a fresh clone without a .env.
     """
     monkeypatch.setenv("CARDS_USER_DIR", str(tmp_path / "user"))
     monkeypatch.setenv("GRAPHICS_ENABLED", "true")
     monkeypatch.setenv("DEFAULT_MODEL", "test-model")
+    monkeypatch.setenv("PROVIDER_API_KEY", "test-key")
     get_settings.cache_clear()
     yield
     get_settings.cache_clear()
