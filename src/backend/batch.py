@@ -6,6 +6,7 @@ for the UI sits as its own block at the end of the file, so that `run` stays
 usable — and readable — without it, which is the path the dataset script takes.
 """
 
+import logging
 import threading
 import time
 from datetime import datetime
@@ -15,6 +16,8 @@ from backend import llm, pdf
 from backend.config import get_settings
 from backend.schemas import BatchProgress, BatchResult, BatchStatus
 from backend.storage import CardStorage
+
+logger = logging.getLogger(__name__)
 
 
 # =========================================================
@@ -131,7 +134,9 @@ def run(
                 if _is_rate_limit(exc):
                     return "rate_limited"
                 if attempt == 1:
+                    logger.warning("Slide %d failed, retrying: %s", page, exc)
                     continue  # one retry; temporary glitches sort themselves out
+                logger.error("Slide %d failed twice, skipping: %s", page, exc)
                 # An error note instead of a card list: the slide counts as not
                 # done, but the run carries on.
                 storage.save_page(
@@ -207,6 +212,7 @@ def _work(job: BatchProgress, pages: list[int], graphics: bool) -> None:
         if result.failed:
             job.message += f" {result.failed} Folien sind fehlgeschlagen."
     except Exception as exc:  # the run must not die silently in the background
+        logger.exception("Batch run for %s crashed", job.pdf_name)
         job.status = "error"
         job.message = str(exc)
     finally:
