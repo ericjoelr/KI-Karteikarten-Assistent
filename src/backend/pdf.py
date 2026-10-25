@@ -178,8 +178,7 @@ def get_model_input(file_name: str, page_num: int, *, graphics: bool) -> tuple[b
     """What the model gets to see for one slide: image plus its graphics.
 
     This is the frozen input contract of the fine-tuned model and therefore
-    lives in exactly one place — the single-slide generation and the batch run
-    must not drift apart here.
+    lives in exactly one place.
 
     graphics off: nothing is extracted and the slide stays unmarked.
     graphics on: the graphics are extracted, and the slide image carries the

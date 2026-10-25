@@ -2,7 +2,7 @@
 
 The routes are one-liners, so they live here instead of in router files.
 Exception to the module layout: they are ordered by topic (providers, PDFs, cards,
-generation, batch run, Anki) rather than private-before-public, because that is
+generation, Anki) rather than private-before-public, because that is
 how the API reads in the /docs page.
 """
 
@@ -13,14 +13,12 @@ from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from backend import anki, batch, llm, pdf, providers
+from backend import anki, llm, pdf, providers
 from backend.config import get_settings
 from backend.storage import CardStorage
 from backend.schemas import (
     ActionResult,
     ActivateRequest,
-    BatchProgress,
-    BatchRequest,
     CreateDeckRequest,
     ExportRequest,
     GenerateRequest,
@@ -70,13 +68,7 @@ def provider_models(req: ProviderRequest) -> dict[str, list[str]]:
 
 @app.post("/providers/activate")
 def provider_activate(req: ActivateRequest) -> dict:
-    """Makes a model the active one; 409 while a batch run is going."""
-    # A run would switch models mid-PDF — or lose its server on an mlx restart.
-    job = batch.status()
-    if job and job.running:
-        raise HTTPException(
-            status_code=409, detail="Während eines Laufs lässt sich das Modell nicht wechseln."
-        )
+    """Makes a model the active one."""
     try:
         providers.activate(req.provider, req.model, base_url=req.base_url, api_key=req.api_key)
     except providers.ProviderError as exc:
@@ -115,11 +107,13 @@ def page_graphics(name: str, page: int) -> dict[str, list[str]]:
 
 
 @app.get("/pdfs/{name}/pending")
-def pending_pages(name: str) -> dict[str, int]:
-    """How many slides a batch run would still have to process (= requests)."""
+def pending_pages(name: str) -> dict[str, list[int] | int]:
+    """The slides without generated cards yet — one LLM request each."""
     total = pdf.get_page_count(name)
-    open_pages = batch.pending(CardStorage(name), list(range(1, total + 1)))
-    return {"pending": len(open_pages), "total": total}
+    slides = CardStorage(name).load().slides
+    # An empty card list counts as done: the slide has nothing worth a card.
+    pages = [page for page in range(1, total + 1) if str(page) not in slides]
+    return {"pages": pages, "total": total}
 
 
 @app.post("/pdfs", status_code=201)
@@ -141,9 +135,7 @@ async def upload_pdfs(files: list[UploadFile]) -> dict[str, list[str]]:
 def page_cards(name: str, page: int) -> PageCardsResponse:
     """The slide's cards from the card store, with the graphics mode they were generated in."""
     entry = CardStorage(name).get_page(page)
-    # An error note counts as "never processed": the slide may be generated
-    # again on its own instead of counting as done and empty.
-    if entry is None or entry.error is not None:
+    if entry is None:
         return PageCardsResponse(generated=False, graphics=False, cards=[])
     return PageCardsResponse(generated=True, graphics=entry.graphics, cards=entry.cards)
 
@@ -229,33 +221,6 @@ def generate(req: GenerateRequest) -> GenerateResponse:
         cards=generated,
         graphics=[base64.b64encode(g).decode() for g in graphics],
     )
-
-
-# =========================================================
-# Batch run
-# =========================================================
-@app.post("/generate/batch", response_model=BatchProgress, status_code=202)
-def generate_batch(req: BatchRequest) -> BatchProgress:
-    """Starts a background run over the PDF's open slides; 409 if one is already going."""
-    try:
-        return batch.start(req.pdf_name, graphics=req.graphics)
-    except batch.BatchConflict as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
-
-
-@app.get("/generate/batch/status", response_model=BatchProgress | None)
-def batch_status() -> BatchProgress | None:
-    """Progress of the running or most recently finished run (lost on a restart)."""
-    return batch.status()
-
-
-@app.post("/generate/batch/cancel", response_model=BatchProgress)
-def cancel_batch() -> BatchProgress:
-    """Stops the run before the next slide; 409 if none is going."""
-    try:
-        return batch.cancel()
-    except batch.BatchConflict as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
 
 
 # =========================================================

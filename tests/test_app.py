@@ -1,12 +1,9 @@
 import base64
-import threading
-import time
 from unittest.mock import patch
 
-import pytest
 from fastapi.testclient import TestClient
 
-from backend import anki, batch, schemas
+from backend import anki
 from backend.storage import CardStorage
 from backend.config import Settings, get_settings
 from backend.schemas import flashcard
@@ -285,154 +282,13 @@ def test_anki_status_route_reports_running():
 
 
 # =========================================================
-# Batch run over the routes
+# Open slides
 # =========================================================
-@pytest.fixture(autouse=True)
-def idle_batch():
-    """No run left over from a previous test; the progress is process state."""
-    batch._job = None
-    batch._cancel.clear()
-    yield
-    batch._job = None
-
-
-def wait_until(predicate, timeout: float = 3.0) -> bool:
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(0.01)
-    return False
-
-
-def batch_status() -> dict | None:
-    return client.get("/generate/batch/status").json()
-
-
-def start_batch(**payload) -> dict:
-    return client.post("/generate/batch", json={"pdf_name": "x.pdf", **payload})
-
-
-def held_run(release: threading.Event, result: schemas.BatchResult, seen: dict):
-    """Stand-in for batch.run: reports one finished slide, then waits."""
-
-    def fake(storage, pages, *, graphics, cancel=None, on_progress=None):
-        seen.update(pages=pages, graphics=graphics, cancel=cancel)
-        if on_progress:
-            on_progress(1)
-        release.wait(3)
-        if cancel is not None and cancel.is_set():
-            return schemas.BatchResult(status="cancelled", generated=1, failed=0)
-        return result
-
-    return fake
-
-
-def test_batch_status_is_empty_before_any_run():
-    assert batch_status() is None
-
-
-def test_batch_start_covers_only_the_pages_that_still_need_work():
-    CardStorage("x.pdf").save_page(
-        2, [flashcard(front="F", back="B")],
-        graphics=False, marked=False, generated_at="t", model="m",
-    )
-    release, seen = threading.Event(), {}
-    with patch("backend.main.pdf.get_page_count", return_value=3), \
-         patch("backend.main.batch.run", side_effect=held_run(
-             release, schemas.BatchResult(status="done", generated=2, failed=0), seen)):
-        resp = start_batch()
-        assert resp.status_code == 202
-        assert wait_until(lambda: "pages" in seen)
-        release.set()
-        assert wait_until(lambda: batch_status()["running"] is False)
-
-    assert seen["pages"] == [1, 3]
-    assert resp.json()["total"] == 2
-
-
-def test_batch_start_rejects_a_second_run():
-    release, seen = threading.Event(), {}
-    with patch("backend.main.pdf.get_page_count", return_value=3), \
-         patch("backend.main.batch.run", side_effect=held_run(
-             release, schemas.BatchResult(status="done", generated=3, failed=0), seen)):
-        first = start_batch()
-        second = start_batch()
-        release.set()
-        assert wait_until(lambda: batch_status()["running"] is False)
-
-    assert first.status_code == 202
-    assert second.status_code == 409
-    assert "läuft" in second.json()["detail"]
-
-
-def test_batch_status_route_reports_progress_and_result():
-    release, seen = threading.Event(), {}
-    with patch("backend.main.pdf.get_page_count", return_value=3), \
-         patch("backend.main.batch.run", side_effect=held_run(
-             release, schemas.BatchResult(status="done", generated=3, failed=0), seen)):
-        start_batch()
-        assert wait_until(lambda: batch_status()["done"] == 1)
-        running = batch_status()
-        release.set()
-        assert wait_until(lambda: batch_status()["running"] is False)
-        finished = batch_status()
-
-    assert (running["pdf_name"], running["total"], running["running"]) == ("x.pdf", 3, True)
-    assert finished["status"] == "done"
-    assert "3" in finished["message"]
-
-
-def test_batch_cancel_route_stops_the_run():
-    release, seen = threading.Event(), {}
-    with patch("backend.main.pdf.get_page_count", return_value=2), \
-         patch("backend.main.batch.run", side_effect=held_run(
-             release, schemas.BatchResult(status="done", generated=2, failed=0), seen)):
-        start_batch()
-        assert wait_until(lambda: "cancel" in seen)
-        cancel = client.post("/generate/batch/cancel")
-        release.set()
-        assert wait_until(lambda: batch_status()["running"] is False)
-
-    assert cancel.status_code == 200
-    assert seen["cancel"].is_set()
-    assert batch_status()["status"] == "cancelled"
-
-
-def test_batch_cancel_without_a_run_is_rejected():
-    assert client.post("/generate/batch/cancel").status_code == 409
-
-
-def test_exhausted_quota_is_reported_in_plain_text():
-    release, seen = threading.Event(), {}
-    release.set()
-    with patch("backend.main.pdf.get_page_count", return_value=5), \
-         patch("backend.main.batch.run", side_effect=held_run(
-             release, schemas.BatchResult(status="rate_limited", generated=2, failed=0), seen)):
-        start_batch()
-        assert wait_until(lambda: batch_status()["running"] is False)
-
-    message = batch_status()["message"]
-    assert "2" in message and "Kontingent" in message
-
-
-def test_batch_start_passes_the_graphics_mode():
-    release, seen = threading.Event(), {}
-    release.set()
-    with patch("backend.main.pdf.get_page_count", return_value=1), \
-         patch("backend.main.batch.run", side_effect=held_run(
-             release, schemas.BatchResult(status="done", generated=1, failed=0), seen)):
-        start_batch(graphics=False)
-        assert wait_until(lambda: batch_status()["running"] is False)
-
-    assert seen["graphics"] is False
-
-
-def test_pending_route_counts_the_open_pages():
+def test_pending_route_lists_the_slides_without_cards():
     CardStorage("x.pdf").save_page(
         1, [], graphics=False, marked=False, generated_at="t", model="m",
     )
     with patch("backend.main.pdf.get_page_count", return_value=4):
         resp = client.get("/pdfs/x.pdf/pending")
 
-    assert resp.json() == {"pending": 3, "total": 4}
+    assert resp.json() == {"pages": [2, 3, 4], "total": 4}

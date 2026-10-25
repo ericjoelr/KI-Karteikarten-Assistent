@@ -16,9 +16,9 @@ from backend.schemas import CardStatus, CardStore, SlideEntry, StoredCard, flash
 # Shared module state
 # =========================================================
 
-# The file is rewritten completely after every finished slide. The batch run
-# works in a background thread while HTTP requests (export, edit) write the same
-# file -> serialize the writes. The lock belongs to the module, not to the
+# The file is rewritten completely on every change. FastAPI runs the routes in
+# a thread pool, so two requests (generate, export, edit) can write the same
+# file at once -> serialize the writes. The lock belongs to the module, not to the
 # instance: the same file is worked on by several short-lived instances.
 _lock = threading.Lock()
 
@@ -42,8 +42,8 @@ class CardStorage:
 
     def _save(self, store: CardStore) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        # Write next to it first, then rename: whoever reads in parallel (the
-        # frontend during a batch run) never sees a half-written file.
+        # Write next to it first, then rename: whoever reads in parallel never
+        # sees a half-written file.
         tmp = self.path.with_suffix(".json.tmp")
         tmp.write_text(store.model_dump_json(indent=2), encoding="utf-8")
         tmp.replace(self.path)
@@ -71,7 +71,6 @@ class CardStorage:
         marked: bool,
         generated_at: str,
         model: str,
-        error: str | None = None,
     ) -> None:
         """Stores the result of a generation, replacing the previous cards."""
         entry = SlideEntry(
@@ -80,7 +79,6 @@ class CardStorage:
             generated_at=generated_at,
             model=model,
             cards=[StoredCard(front=c.front, back=c.back) for c in cards],
-            error=error,
         )
         with _lock:
             store = self.load()

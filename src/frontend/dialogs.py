@@ -1,4 +1,4 @@
-"""The modal dialogs of the UI and the self-refreshing progress fragment.
+"""The modal dialogs of the UI.
 
 No side effects at module level: Streamlit re-runs the entry point on every
 interaction, but not the modules it imports.
@@ -8,15 +8,13 @@ import streamlit as st
 
 from api import (
     activate_model,
-    cancel_batch,
     create_deck,
+    generate_cards,
     get_available_pdfs,
-    get_batch_status,
     get_decks,
     get_page_graphics,
     get_pending,
     list_models,
-    start_batch,
     upload_pdfs,
 )
 
@@ -220,67 +218,41 @@ def model_dialog(config: dict):
         st.rerun()
 
 
-@st.fragment(run_every="2s")
-def batch_progress():
-    """Cost estimate and start button of a run — or its live progress.
-
-    A fragment, so the progress refreshes itself without reloading the page: an
-    ordinary rerun would close the dialog around it.
-    """
-    job = get_batch_status()
-
-    if job and job["running"]:
-
-        if job["pdf_name"] != st.session_state.pdf_name:
-            st.info(f"Es läuft gerade ein Lauf für „{job['pdf_name']}“.")
-
-        st.progress(
-            job["done"] / job["total"] if job["total"] else 1.0,
-            text=f"{job['done']} von {job['total']} Folien erzeugt",
-        )
-
-        st.caption(
-            "Der Lauf läuft im Backend weiter – der Dialog darf geschlossen werden. "
-            "Fertige Folien lassen sich sofort prüfen."
-        )
-
-        # No st.rerun after the buttons: every rerun — a fragment-scoped one
-        # included — closes the dialog. The run_every picks up the new state
-        # on its own.
-        if st.button("⏹️ Abbrechen"):
-            cancel_batch()
-
-        return
-
-    # Result of the last run, as long as it belongs to the selected PDF.
-    if job and job["status"] and job["pdf_name"] == st.session_state.pdf_name:
-        if job["status"] == "done":
-            st.success(job["message"])
-        else:
-            st.warning(job["message"])
-
-    counts = get_pending(st.session_state.pdf_name)
-
-    st.markdown(
-        f"**PDF:** {st.session_state.pdf_name}  \n"
-        f"**Grafik-Modus:** "
-        f"{'mit Grafiken' if st.session_state.graphics_enabled else 'ohne Grafiken'}  \n"
-        f"**Offene Folien:** {counts['pending']} von {counts['total']}  \n"
-        f"**Anfragen ans LLM:** {counts['pending']}"
-    )
-
-    if st.button("🚀 Lauf starten", type="primary", disabled=counts["pending"] == 0):
-
-        rejected = start_batch(
-            st.session_state.pdf_name,
-            st.session_state.graphics_enabled,
-        )
-
-        if rejected:
-            st.error(rejected)
-
-
 @st.dialog("Alle Folien generieren")
 def batch_dialog():
-    """The dialog around the progress fragment."""
-    batch_progress()
+    """Generates the cards of every slide that has none yet, one after another.
+
+    Each slide goes through the same /generate as a single slide and is stored
+    right away — so closing the dialog stops the loop without losing anything,
+    and a new start picks up the slides that are still open.
+    """
+    pdf_name = st.session_state.pdf_name
+    graphics = st.session_state.graphics_enabled
+    pending = get_pending(pdf_name)
+    pages = pending["pages"]
+
+    st.markdown(
+        f"**PDF:** {pdf_name}  \n"
+        f"**Grafik-Modus:** {'mit Grafiken' if graphics else 'ohne Grafiken'}  \n"
+        f"**Offene Folien:** {len(pages)} von {pending['total']}  \n"
+        f"**Anfragen ans LLM:** {len(pages)}"
+    )
+
+    if not st.button("🚀 Lauf starten", type="primary", disabled=not pages):
+        return
+
+    progress = st.progress(0.0)
+    for done, page in enumerate(pages):
+        progress.progress(done / len(pages), text=f"Folie {page} ({done} von {len(pages)} erzeugt)")
+        try:
+            generate_cards(pdf_name, page, graphics)
+        except Exception as exc:
+            # Stop at the first error (a missing key or an exhausted quota would
+            # hit every further slide too); a new start continues from here.
+            st.error(f"Folie {page} fehlgeschlagen: {exc}")
+            st.caption(f"{done} Folien wurden gesichert. Ein neuer Start setzt dort fort.")
+            return
+
+    # A toast survives the rerun, which closes the dialog and shows the cards.
+    st.toast(f"{len(pages)} Folien erzeugt.")
+    st.rerun()

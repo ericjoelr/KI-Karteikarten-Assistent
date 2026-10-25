@@ -54,7 +54,7 @@ def list_models(provider: str, base_url: str | None, api_key: str | None) -> lis
 
 
 # Starts a local server if needed (mlx: up to a few minutes). Raises
-# RuntimeError on 409 (batch run going) or an unreachable provider.
+# RuntimeError on an unreachable provider.
 def activate_model(provider: str, model: str, base_url: str | None, api_key: str | None) -> None:
     resp = api_post(
         "/providers/activate",
@@ -142,28 +142,9 @@ def generate_cards(pdf_name: str, page: int, graphics: bool, feedback: str | Non
     resp.raise_for_status()
 
 
-# Open slides of the PDF: {"pending": int, "total": int} — pending == requests.
+# Slides of the PDF without cards yet: {"pages": [int], "total": int}.
 def get_pending(name: str) -> dict:
     return api_get(f"/pdfs/{name}/pending").json()
-
-
-# Returns the rejection message if a run is already going, otherwise None.
-def start_batch(pdf_name: str, graphics: bool) -> str | None:
-    resp = api_post("/generate/batch", json={"pdf_name": pdf_name, "graphics": graphics})
-    # 409 = a run is already going; anything else is a real error.
-    if resp.status_code == 409:
-        return resp.json()["detail"]
-    resp.raise_for_status()
-    return None
-
-
-# None while no run has happened since the backend started.
-def get_batch_status() -> dict | None:
-    return api_get("/generate/batch/status").json()
-
-
-def cancel_batch() -> None:
-    api_post("/generate/batch/cancel")
 
 
 # =========================================================

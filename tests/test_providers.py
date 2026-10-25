@@ -1,4 +1,3 @@
-from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,7 +5,6 @@ from fastapi.testclient import TestClient
 from backend import config
 from backend.config import get_settings
 from backend.main import app
-from backend.schemas import BatchProgress
 
 client = TestClient(app)
 
@@ -65,12 +63,3 @@ def test_mlx_listing_without_adapter_dir_is_a_readable_error(monkeypatch):
 
     assert resp.status_code == 502
     assert "MLX_ADAPTERS_DIR" in resp.json()["detail"]
-
-
-def test_switching_the_model_is_refused_during_a_batch_run(env_file):
-    running = BatchProgress(pdf_name="x.pdf", total=3)
-    with patch("backend.main.batch.status", return_value=running):
-        resp = client.post("/providers/activate", json={"provider": "cloud", "model": "b"})
-
-    assert resp.status_code == 409
-    assert get_settings().default_model != "b"
