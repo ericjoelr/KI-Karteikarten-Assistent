@@ -16,11 +16,11 @@ Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für dies
 
 ## Die Oberfläche
 
-![Oberfläche: links die gewählte Folie, rechts die generierten Karten zur Prüfung](assets/oberflaeche.webp)
+![Oberfläche: links die gewählte Folie, rechts die generierten Karten zur Prüfung](docs/readme_graphics/nutzeroberfl%C3%A4che.png)
 
 ## Architektur
 
-![Verarbeitungsfluss: Folie aus dem PDF über das Vision-Text-Modell zu geprüften Karten in Anki](assets/architektur.webp)
+![Verarbeitungsfluss: Folie aus dem PDF über das Vision-Text-Modell zu geprüften Karten in Anki](docs/readme_graphics/architektur.webp)
 
 ## Quickstart
 
