@@ -22,16 +22,31 @@ Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für dies
 
 ![Verarbeitungsfluss: Vorlesungs-PDF über Streamlit-Frontend, FastAPI-Backend und Vision-LLM zu geprüften Karten in Anki](docs/readme_graphics/architektur.webp)
 
-## Quickstart
+## Selbst Starten
 
-Voraussetzungen: [uv](https://docs.astral.sh/uv/)
-[Anki](https://apps.ankiweb.net/) mit dem Add-on [AnkiConnect](https://ankiweb.net/shared/info/2055492159).
+### Voraussetzungen
+
+- [uv](https://docs.astral.sh/uv/) (installiert Python 3.13 selbst)
+- [Anki](https://apps.ankiweb.net/) mit dem Add-on [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
+- **Eines** der folgenden Modell-Backends:
+  - **Cloud-Anbieter** mit OpenAI-kompatibler API, einem Vision-LLM und Unterstützung für
+    `json_schema`-Ausgabe, z. B. Google Gemini ([kostenloser API-Key](https://aistudio.google.com/apikey)).
+    In der `.env`: `CLOUD_API_KEY` und `PROVIDER_API_KEY`.
+  - **llama.cpp** mit einem eigenen Vision-Modell im Hugging-Face-Cache.
+    In der `.env`: `LLAMACPP_SERVER=/pfad/zu/llama-server` (nur nötig, wenn `llama-server` nicht im `PATH` liegt).
+  - **MLX-Server** (`mlx_vlm.server`, nur Apple Silicon) mit einem eigenen LoRA-Adapter.
+    In der `.env`: `MLX_SERVER=/pfad/zu/mlx_vlm.server` und `MLX_ADAPTERS_DIR=/pfad/zu/adaptern`
+    (ein Unterordner pro Adapter).
+
+Die lokalen Server startet die Anwendung selbst, sobald in der Oberfläche ein Modell aktiviert wird.
+
+### Installation
 
 ```bash
 git clone https://github.com/ericjoelr/KI-Karteikarten-Assistent.git
 cd KI-Karteikarten-Assistent
 uv sync
-cp .env.example .env          # CLOUD_API_KEY und PROVIDER_API_KEY eintragen
+cp .env.example .env          # Werte für das gewählte Modell-Backend eintragen
 ```
 
 Backend und Frontend zusammen starten (Strg+C beendet beide):
@@ -40,7 +55,7 @@ Backend und Frontend zusammen starten (Strg+C beendet beide):
 make run
 ```
 
-Das Frontend öffnet sich unter http://localhost:8501, die API-Dokumentation liegt unter http://127.0.0.1:8000/docs.
+Das Frontend öffnet sich unter http://localhost:8501.
 
 Im Frontend ein PDF hochladen (oder nach `data/pdf/` legen), eine Folie wählen und
 **Karten erzeugen** klicken. 
