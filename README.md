@@ -34,12 +34,13 @@ uv sync
 cp .env.example .env          # CLOUD_API_KEY und PROVIDER_API_KEY eintragen
 ```
 
-In zwei Terminals starten:
+Backend und Frontend zusammen starten (Strg+C beendet beide):
 
 ```bash
-uv run uvicorn backend.main:app --reload             # Backend:  http://127.0.0.1:8000/docs
-uv run streamlit run src/frontend/streamlit_app.py   # Frontend: http://localhost:8501
+make run
 ```
+
+Das Frontend öffnet sich unter http://localhost:8501, die API-Dokumentation liegt unter http://127.0.0.1:8000/docs.
 
 Im Frontend ein PDF hochladen (oder nach `data/pdf/` legen), eine Folie wählen und
 **Karten erzeugen** klicken. 
