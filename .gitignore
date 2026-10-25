@@ -27,3 +27,6 @@ data/pdf/
 # Issues und PRDs des lokalen Issue-Trackers
 .scratch/
 
+
+# macOS
+.DS_Store
