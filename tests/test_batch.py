@@ -1,25 +1,12 @@
 import threading
 from unittest.mock import patch
 
-import pytest
+import httpx
+from openai import RateLimitError
 
 from backend import batch
-from backend.config import get_settings
 from backend.schemas import flashcard
 from backend.storage import CardStorage
-
-
-@pytest.fixture(autouse=True)
-def batch_settings(monkeypatch):
-    """Sets the batch configuration; without a per-minute limit it never waits."""
-
-    def apply(**env):
-        for key, value in env.items():
-            monkeypatch.setenv(key.upper(), str(value))
-        get_settings.cache_clear()
-
-    apply(max_requests_per_minute=0, max_requests_per_run=100)
-    return apply
 
 
 def run(pages, llm_result=None, llm_answers=None, **kwargs):
@@ -39,8 +26,9 @@ def run(pages, llm_result=None, llm_answers=None, **kwargs):
     return result, generate
 
 
-class rate_limit_error(Exception):
-    status_code = 429
+def rate_limit_error() -> RateLimitError:
+    response = httpx.Response(429, request=httpx.Request("POST", "http://provider"))
+    return RateLimitError("quota exhausted", response=response, body=None)
 
 
 # =========================================================
@@ -63,9 +51,9 @@ def test_page_without_cards_is_stored_as_a_finished_entry():
     assert entry is not None and entry.cards == [] and entry.error is None
 
 
-def test_each_reserved_slot_is_exactly_one_provider_request():
-    # Counted at the client, not at a parameter: one slide, one provider request,
-    # otherwise throttle and budget would count too low.
+def test_each_slide_is_exactly_one_provider_request():
+    # Counted at the client, not at a parameter: the request count shown before
+    # a run (pending slides) must match what the run really sends.
     with patch("backend.batch.pdf.get_graphics", return_value=[b"jpgdata"]), \
          patch("backend.batch.pdf.get_slide_image", return_value=b"img"), \
          patch("backend.llm.OpenAI") as openai:
@@ -130,12 +118,12 @@ def test_page_with_empty_card_list_is_not_generated_again():
 # =========================================================
 # Errors, quota and cancellation
 # =========================================================
-def test_failing_page_is_retried_once_then_marked_and_the_run_continues():
-    answers = [RuntimeError("boom"), RuntimeError("boom"), [flashcard(front="F", back="B")]]
+def test_failing_page_is_marked_and_the_run_continues():
+    answers = [RuntimeError("boom"), [flashcard(front="F", back="B")]]
 
     result, generate = run([1, 2], llm_answers=answers)
 
-    assert generate.call_count == 3  # slide 1: attempt + retry, slide 2: once
+    assert generate.call_count == 2  # no retry: the next run picks slide 1 up again
     assert (result.status, result.generated, result.failed) == ("done", 1, 1)
     failed = CardStorage("x.pdf").get_page(1)
     assert failed.cards == [] and "boom" in failed.error
@@ -148,7 +136,7 @@ def test_rate_limit_stops_the_run_and_keeps_what_was_generated():
     result, generate = run([1, 2, 3], llm_answers=answers)
 
     assert result.status == "rate_limited"
-    assert generate.call_count == 2  # no retry, no third slide
+    assert generate.call_count == 2  # no third slide
     assert CardStorage("x.pdf").get_page(1) is not None
     assert CardStorage("x.pdf").get_page(2) is None
     assert CardStorage("x.pdf").get_page(3) is None
@@ -166,36 +154,3 @@ def test_cancel_flag_stops_before_the_next_page():
     assert result.status == "cancelled"
     assert generate.call_count == 1
     assert CardStorage("x.pdf").get_page(1) is not None
-
-
-def test_run_stops_at_the_request_limit(batch_settings):
-    batch_settings(max_requests_per_run=2)
-
-    result, generate = run([1, 2, 3, 4])
-
-    assert result.status == "limit_reached"
-    assert generate.call_count == 2
-    assert result.generated == 2
-
-
-# =========================================================
-# Throttling (faked clock, no real waiting)
-# =========================================================
-def test_limiter_spaces_consecutive_requests(monkeypatch):
-    monkeypatch.setattr(batch.time, "monotonic", lambda: 0.0)
-    monkeypatch.setattr(batch.time, "sleep", lambda seconds: None)
-    limiter = batch._limiter(interval=4.0, budget=10)
-
-    # Every request gets its start slot at the minimum gap from the previous one.
-    assert [limiter.take() for _ in range(5)] == [0.0, 4.0, 8.0, 12.0, 16.0]
-
-
-def test_run_waits_the_configured_minimum_gap(monkeypatch, batch_settings):
-    batch_settings(max_requests_per_minute=60)  # 1 request per second
-    monkeypatch.setattr(batch.time, "monotonic", lambda: 0.0)
-    waits: list[float] = []
-    monkeypatch.setattr(batch.time, "sleep", waits.append)
-
-    run([1, 2, 3])
-
-    assert waits == [1.0, 2.0]  # the first request starts immediately

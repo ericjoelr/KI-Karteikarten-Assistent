@@ -49,14 +49,6 @@ class Settings(BaseSettings):
     # Default of the graphics mode; individual requests may override it.
     graphics_enabled: bool = True
 
-    # --- Batch run ---
-    # On the free Gemini tier the per-minute limit is binding (15/min); the run
-    # processes the slides one after another and keeps that gap.
-    max_requests_per_minute: int = 15
-    # Budget of a single run, so the daily quota can be spread over several
-    # runs.
-    max_requests_per_run: int = 200
-
     # --- Anki ---
     anki_server: str = "http://127.0.0.1:8765"
 

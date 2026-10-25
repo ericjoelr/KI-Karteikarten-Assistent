@@ -54,7 +54,7 @@ class CardStore(BaseModel):
 # =========================================================
 
 # "done" = all slides processed; the other statuses end the run early.
-BatchStatus = Literal["done", "cancelled", "rate_limited", "limit_reached"]
+BatchStatus = Literal["done", "cancelled", "rate_limited"]
 
 
 class BatchResult(BaseModel):
