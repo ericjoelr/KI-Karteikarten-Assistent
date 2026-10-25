@@ -30,10 +30,9 @@ Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für dies
 - [Anki](https://apps.ankiweb.net/) mit dem Add-on [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
 - **Eines** der folgenden Modell-Backends:
   - **Cloud-Anbieter** mit OpenAI-kompatibler API, einem Vision-LLM und Unterstützung für
-    `json_schema`-Ausgabe, z. B. Google Gemini ([kostenloser API-Key](https://aistudio.google.com/apikey)).
-    In der `.env`: `CLOUD_API_KEY` und `PROVIDER_API_KEY`.
+    `json_schema`-Ausgabe, z. B. Google Gemini. In der `.env`: `CLOUD_API_KEY` und `PROVIDER_API_KEY` setzen.
   - **llama.cpp** mit einem eigenen Vision-Modell im Hugging-Face-Cache.
-    In der `.env`: `LLAMACPP_SERVER=/pfad/zu/llama-server` (nur nötig, wenn `llama-server` nicht im `PATH` liegt).
+    In der `.env`: `LLAMACPP_SERVER=/pfad/zu/llama-server` setzen.
   - **MLX-Server** (`mlx_vlm.server`, nur Apple Silicon) mit einem eigenen LoRA-Adapter.
     In der `.env`: `MLX_SERVER=/pfad/zu/mlx_vlm.server` und `MLX_ADAPTERS_DIR=/pfad/zu/adaptern`
     (ein Unterordner pro Adapter).
@@ -64,11 +63,30 @@ Um Karten nach Anki zu exportieren, muss die Anwendung mit installiertem AnkiCon
 ## Projektstruktur
 
 ```
-data/                 Vorlesungsskripte als PDFs und erstellte Karten
-src/backend/          PDF-Verarbeitung, Kartengenererierung und -Speicherung sowie die Anki Schnittstelle
-src/backend/prompts/  System-Prompts
-src/frontend/         Streamlit-Oberfläche
-tests/                Tests für die Backend Logik
+.
+├── data/
+│   ├── pdf/                    Vorlesungsskripte als PDF (inkl. Beispiel_Vorlesung.pdf)
+│   └── cards/                  Kartenbestand: eine JSON-Datei pro PDF (wird zur Laufzeit angelegt)
+├── src/
+│   ├── backend/                FastAPI-Backend
+│   │   ├── main.py             Alle API-Routen; leiten nur an die Module weiter
+│   │   ├── pdf.py              Folien als Bild rendern, Grafiken erkennen und nummeriert markieren
+│   │   ├── llm.py              Anfrage ans Vision-LLM, JSON-Schema erzwingt das Kartenformat
+│   │   ├── providers.py        Modell-Anbieter (Cloud, llama.cpp, MLX): Modelle auflisten, lokale Server starten
+│   │   ├── storage.py          Kartenbestand lesen und schreiben (Karten, Prüfstatus, Anki-ID)
+│   │   ├── anki.py             Export nach Anki: Markdown → HTML, Grafiken als Medien, AnkiConnect
+│   │   ├── schemas.py          Alle Datenmodelle (Pydantic) an einer Stelle
+│   │   ├── config.py           Einstellungen aus der .env, setzt den System-Prompt zusammen
+│   │   └── prompts/            System-Prompt und Zusatz für den Grafik-Modus
+│   └── frontend/               Streamlit-Oberfläche
+│       ├── streamlit_app.py    Einstieg: Folienansicht und Review der Karten
+│       ├── dialogs.py          Dialoge: PDF, Anki-Deck, Modellwahl, alle Folien generieren
+│       └── api.py              Alle HTTP-Aufrufe ans Backend
+├── tests/                      pytest: API-Routen, Kartenbestand, LLM-Anfrage, Modell-Anbieter
+├── docs/readme_graphics/       Bilder dieser README
+├── .env.example                Vorlage für die Konfiguration
+├── Makefile                    make run: startet Backend und Frontend
+└── pyproject.toml              Abhängigkeiten und Tool-Konfiguration (uv, ruff)
 ```
 
 ## Kontext
