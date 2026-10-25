@@ -33,7 +33,7 @@ from dialogs import PROVIDER_LABEL, batch_dialog, close_editor, deck_dialog, mod
 # Page setup
 # =========================================================
 st.set_page_config(
-    page_title="Karteikarten Agent",
+    page_title="Karteikarten Assistent",
     layout="wide"
 )
 
@@ -147,7 +147,7 @@ STATUS_LABEL = {
 # =========================================================
 # Main UI
 # =========================================================
-st.title("Karteikarten Agent")
+st.title("Karteikarten Assistent")
 
 
 # =========================================================
