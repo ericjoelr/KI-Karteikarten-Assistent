@@ -33,15 +33,12 @@ einen Menschen im Prozess: Keine Karte landet in Anki, ohne geprüft zu sein.
 - **Anbieter in der Oberfläche umschaltbar** — Cloud (beliebiger OpenAI-kompatibler Endpunkt),
   llama.cpp oder ein feinabgestimmtes Qwen3-VL-4B über `mlx_vlm`; lokale Server startet und
   stoppt das Backend selbst.
-- **Datensatz-Generator** — derselbe Batch-Lauf erzeugt per Skript synthetische Trainingsdaten
-  für das Fine-Tuning des lokalen Modells.
 
 ## Architektur
 
 ```mermaid
 flowchart LR
     UI["Streamlit-Frontend<br/>(Review, Navigation)"] -- HTTP --> API["FastAPI-Backend<br/>main.py"]
-    Script["scripts/generate_dataset.py"] --> Batch
     API --> Batch["batch.py<br/>Rate-Limit, Retry, Resume"]
     API --> PDF
     Batch --> PDF["pdf.py<br/>Render + Grafik-Extraktion"]
@@ -56,8 +53,8 @@ flowchart LR
 
 Das **Frontend** ist ein reiner HTTP-Client und importiert nichts aus dem Backend. Das
 **Backend** ist bewusst flach: Routen rufen die Module direkt auf, ohne Service-Schicht.
-`pdf.get_model_input` ist die eine Stelle, die festlegt, was das Modell sieht — UI-Läufe und
-Datensatz-Läufe können dadurch nicht auseinanderlaufen. Der **Kartenbestand** (eine JSON-Datei
+`pdf.get_model_input` ist die eine Stelle, die festlegt, was das Modell sieht — Einzelfolie und
+Batch-Lauf können dadurch nicht auseinanderlaufen. Der **Kartenbestand** (eine JSON-Datei
 pro PDF) ist die einzige Wahrheit über Karten und Prüfstatus; er wird nach jeder Folie atomar neu
 geschrieben, Fortschritt *ist* also die Datei. **Anki** bekommt nur abgeleitetes HTML — die
 Karten bleiben als Markdown im Bestand.
@@ -98,12 +95,6 @@ Im Frontend ein PDF hochladen (oder nach `data/pdf/` legen), eine Folie wählen 
 **Karten erzeugen** klicken. Ohne laufendes Anki funktioniert alles außer Deck-Auswahl und
 Export; die Oberfläche bietet einen Knopf zum Starten von Anki an.
 
-Datensatz-Lauf ohne Server und Oberfläche (setzt bei erneutem Aufruf fort):
-
-```bash
-uv run python scripts/generate_dataset.py skript.pdf --from 1 --to 40
-```
-
 ### Lokale Modelle (optional)
 
 Beide Server startet das Backend selbst, sobald in der Oberfläche ein Modell aktiviert wird;
@@ -118,31 +109,24 @@ Eingabevertrag ohne Grafiken — sein Aktivieren schaltet den Grafik-Modus aus.
 src/backend/          FastAPI-App: Routen (main.py), LLM, PDF, Anki, Kartenbestand, Batch, Anbieter
 src/backend/prompts/  System-Prompt (deutsch) + Grafik-Abschnitt
 src/frontend/         Streamlit-Oberfläche; api.py ist der komplette Backend-Vertrag
-scripts/              Datensatz-Lauf für das Fine-Tuning
 tests/                pytest, Anki und LLM gedoubelt
-docs/adr/             Architekturentscheidungen (deutsch)
-CONTEXT.md            Glossar der Domänenbegriffe
 ```
 
 ## Designentscheidungen
 
-Ausführlich in [`docs/adr/`](docs/adr/); die wichtigsten:
-
-- **Grammatik-Zwang statt Prompt-Parsing** ([ADR-0007](docs/adr/0007-struktur-per-grammatik-zwang-statt-per-prompt.md)) —
+- **Grammatik-Zwang statt Prompt-Parsing** —
   `instructor` beschrieb das Schema im Prompt; ein lokales Modell verpackte korrekte Karten
   gelegentlich in einen Markdown-Codeblock. Mit `json_schema` als Sampling-Constraint kann diese
   Ausgabe nicht mehr entstehen.
 - **Eine Folie = ein Bild** — Grafiken werden nicht als Extra-Bilder mitgeschickt, sondern auf
   dem Folienbild nummeriert markiert. Billiger und das, was ein kleines feinabgestimmtes Modell
   verarbeiten kann.
-- **Eingefrorener Ein-/Ausgabevertrag** ([ADR-0003](docs/adr/0003-zweiter-eingabevertrag-ohne-grafiken.md),
-  [ADR-0004](docs/adr/0004-systemprompt-nicht-teil-des-eingefrorenen-vertrags.md)) — das lokale
+- **Eingefrorener Ein-/Ausgabevertrag** — das lokale
   Modell wurde auf genau dieses Format trainiert; flaches Schema, Markdown statt HTML.
-- **Kartenbestand in JSON-Dateien statt in Anki** ([ADR-0001](docs/adr/0001-kartenbestand-in-dateien-statt-in-anki.md)) —
+- **Kartenbestand in JSON-Dateien statt in Anki** —
   ungeprüfte Karten als Markdown neben Anki statt als Anki-HTML darin: Der Batch-Lauf braucht
   kein laufendes Anki, und dieselbe Datei ist Prüfbestand und Trainingsdatensatz in einem.
-- **Kein Modellwechsel im Code** ([ADR-0008](docs/adr/0008-feinabgestimmtes-modell-ueber-mlx-server-ohne-codeaenderung.md),
-  [ADR-0009](docs/adr/0009-anbieterwahl-in-der-oberflaeche-lokale-server-startet-die-app.md)) —
+- **Kein Modellwechsel im Code** —
   alle Anbieter sprechen die OpenAI-API; das feinabgestimmte Modell kam ohne neue Zeile in `llm.py` dazu.
 
 ## Tests

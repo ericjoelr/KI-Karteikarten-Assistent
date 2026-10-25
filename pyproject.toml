@@ -35,10 +35,10 @@ packages = ["src/backend"]
 
 [tool.ruff]
 line-length = 100
-src = ["src", "scripts", "tests"]
+src = ["src", "tests"]
 
 [tool.ruff.lint]
-# Documentation standard (see CLAUDE.md): every module, public class, method and
+# Documentation standard: every module, public class, method and
 # function carries a docstring. extend-select, not select: ruff's defaults
 # (unused imports, undefined names) stay switched on.
 extend-select = ["D100", "D101", "D102", "D103"]
@@ -53,4 +53,4 @@ convention = "google"
 # the work instead.
 "src/frontend/api.py" = ["D103"]
 "src/backend/schemas.py" = ["D101"]
-"tests/*" = ["D"]  # the standard covers backend, frontend and scripts
+"tests/*" = ["D"]  # the standard covers backend and frontend

@@ -1,7 +1,7 @@
 """The connection to the LLM — the one place that knows a provider.
 
 `generate_cards` also builds the request messages, because slide image and
-system prompt together are the frozen input contract (ADR-0003/ADR-0004). A
+system prompt together are the frozen input contract. A
 second provider (Phase 4) becomes a second function in this file.
 """
 
@@ -24,11 +24,11 @@ def generate_cards(
 
     The card schema goes to the provider as `response_format`, not into the
     prompt: both providers turn it into a sampling constraint, so an answer
-    wrapped in a markdown code block cannot arise (ADR-0007). One call is
+    wrapped in a markdown code block cannot arise. One call is
     exactly one provider request.
 
     graphics: graphics mode; off means a system prompt without the GRAFIKEN
-        section (ADR-0003).
+        section.
     feedback: optional HITL hint that goes into the generation.
     """
     settings = get_settings()

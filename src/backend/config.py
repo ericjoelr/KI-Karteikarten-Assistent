@@ -2,7 +2,7 @@
 
 Everything adjustable lives in one settings object; `get_settings()` is cached,
 so a run always sees the same values. The system prompt is composed here too,
-because which parts of it apply is a matter of configuration (ADR-0003).
+because which parts of it apply is a matter of configuration.
 """
 
 from functools import lru_cache
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # --- LLM provider ---
     # The active one, where every request goes. Switched in the UI and written
-    # back to .env, so the choice survives a restart (ADR-0009).
+    # back to .env, so the choice survives a restart.
     provider: Literal["cloud", "llamacpp", "mlx"] = "cloud"
     provider_api_key: str = ""
     provider_base_url: str = ""
@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     # processes the slides one after another and keeps that gap.
     max_requests_per_minute: int = 15
     # Budget of a single run, so the daily quota can be spread over several
-    # scripts.
+    # runs.
     max_requests_per_run: int = 200
 
     # --- Anki ---
@@ -63,10 +63,7 @@ class Settings(BaseSettings):
     # --- Paths ---
     pdf_folder: Path = PROJECT_ROOT / "data" / "pdf"
     prompts_dir: Path = BACKEND_DIR / "prompts"
-    # Card store: separate locations for runs from the UI and for dataset runs,
-    # so both graphics modes can coexist.
     cards_user_dir: Path = PROJECT_ROOT / "data" / "cards" / "user"
-    cards_dataset_dir: Path = PROJECT_ROOT / "data" / "cards" / "dataset"
 
     def _prompt(self, name: str) -> str:
         # Double the backslashes so LaTeX survives inside the prompts.
@@ -83,7 +80,7 @@ class Settings(BaseSettings):
             set_key(ENV_FILE, name.upper(), value)
 
     def system_prompt(self, *, graphics: bool) -> str:
-        """Base prompt; in graphics mode plus the GRAFIKEN section (ADR-0003)."""
+        """Base prompt; in graphics mode plus the GRAFIKEN section."""
         prompt = self._prompt("system_prompt.txt").rstrip()
         if graphics:
             prompt += "\n\n" + self._prompt("graphics_prompt.txt").rstrip()

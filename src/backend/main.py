@@ -199,7 +199,7 @@ def generate(req: GenerateRequest) -> GenerateResponse:
         )
 
     # Graphics mode off: no extraction, an unmarked image and a prompt without
-    # the GRAFIKEN section — the second frozen input contract (ADR-0003).
+    # the GRAFIKEN section — the second frozen input contract.
     settings = get_settings()
     mode = settings.graphics_mode(req.graphics)
     image, graphics = pdf.get_model_input(req.pdf_name, req.page, graphics=mode)

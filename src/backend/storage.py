@@ -1,7 +1,7 @@
 """The card store: the generated cards of one PDF in one JSON file.
 
 It is the single source of truth about generated cards; Anki only holds the
-accepted excerpt of it (ADR-0001). Graphics are not stored — they are
+accepted excerpt of it. Graphics are not stored — they are
 re-extracted from the PDF deterministically on demand (pdf.get_graphics).
 """
 
@@ -31,22 +31,14 @@ _KEEP = object()  # "do not touch note_id" — None explicitly means "clear it"
 
 
 class CardStorage:
-    """The card store of one PDF; the location is fixed at construction time.
+    """The card store of one PDF; the location is fixed at construction time."""
 
-    Without a directory the user store applies (one folder for all PDFs, the
-    file name carries the PDF). A directory that is passed in already belongs to
-    exactly one PDF (dataset store) -> a fixed file name inside it.
-    """
-
-    def __init__(self, pdf_name: str, directory: Path | None = None):
+    def __init__(self, pdf_name: str):
         self.pdf_name = pdf_name
-        if directory is not None:
-            self.path = directory / "cards.json"
-        else:
-            # As with the Anki media files: strip special characters so the PDF
-            # name turns into a clean (and harmless) file name.
-            stem = re.sub(r"\W+", "_", Path(pdf_name).stem)
-            self.path = get_settings().cards_user_dir / f"{stem}.json"
+        # As with the Anki media files: strip special characters so the PDF
+        # name turns into a clean (and harmless) file name.
+        stem = re.sub(r"\W+", "_", Path(pdf_name).stem)
+        self.path = get_settings().cards_user_dir / f"{stem}.json"
 
     def _save(self, store: CardStore) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

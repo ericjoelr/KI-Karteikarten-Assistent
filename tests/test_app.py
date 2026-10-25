@@ -76,7 +76,7 @@ def test_system_prompt_contains_graphics_block_only_when_enabled():
     assert "Grafiken" not in settings.system_prompt(graphics=False)
     assert "grafik:" not in settings.system_prompt(graphics=False)
     # Both contracts are frozen: the graphics prompt is the base plus exactly
-    # one blank line plus the graphics section (ADR-0003).
+    # one blank line plus the graphics section.
     base = settings.system_prompt(graphics=False)
     assert settings.system_prompt(graphics=True).startswith(base + "\n\n# Grafiken:")
 

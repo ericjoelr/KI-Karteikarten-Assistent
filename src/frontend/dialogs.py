@@ -211,7 +211,7 @@ def model_dialog(config: dict):
                 st.error(str(exc))
                 return
 
-        # The fine-tuned model knows only the graphics-less contract (ADR-0008).
+        # The fine-tuned model knows only the graphics-less contract.
         if provider == "mlx":
             st.session_state.graphics_enabled = False
 

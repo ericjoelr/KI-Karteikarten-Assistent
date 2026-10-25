@@ -1,6 +1,6 @@
 """The three LLM providers the UI switches between: their models and activating one.
 
-llama.cpp and mlx run as local servers the backend starts itself (ADR-0009):
+llama.cpp and mlx run as local servers the backend starts itself:
 llama.cpp once, in router mode, loading any cached model on demand; mlx once per
 LoRA adapter, because the adapter is fixed when the server starts.
 """

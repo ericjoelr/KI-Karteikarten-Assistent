@@ -1,9 +1,8 @@
 """Batch run: the cards of many slides in one go, one slide after another.
 
-The UI and the dataset script call the same function (`run`) and differ only in
-the card store they hand it. Exception to the module layout: the job management
-for the UI sits as its own block at the end of the file, so that `run` stays
-usable — and readable — without it, which is the path the dataset script takes.
+Exception to the module layout: the job management for the UI sits as its own
+block at the end of the file, so that `run` stays usable — and readable, and
+testable — without it.
 """
 
 import logging
@@ -86,7 +85,7 @@ def run(
 ) -> BatchResult:
     """Generates the cards of the given slides and fills the card store.
 
-    storage: the card store the run writes into (UI vs. dataset).
+    storage: the card store the run writes into.
     cancel: once set, stop before the next slide; the request in flight is not
         aborted.
     on_progress: receives the number of finished slides after every slide.
@@ -108,7 +107,7 @@ def run(
 
     def generate(page: int) -> None:
         # Slides are independent of each other — no context from previous slides
-        # is carried over on purpose (ADR-0002).
+        # is carried over on purpose.
         image, found = pdf.get_model_input(pdf_name, page, graphics=graphics)
         # One generation is exactly one provider request, so a reserved slot
         # never hides several of them. Failed answers are covered by the retry
@@ -151,7 +150,7 @@ def run(
 
     # Strictly one slide after another: the provider's per-minute limit is
     # binding anyway, so concurrency would gain almost nothing while making the
-    # run considerably harder to read (ADR-0002, consequences).
+    # run considerably harder to read .
     status: BatchStatus = "done"
     for page in todo:
         if cancel is not None and cancel.is_set():
@@ -173,9 +172,7 @@ def run(
 # The progress only lives in the process: the real progress is the card store
 # on disk. A backend restart therefore discards the display, not the work — a
 # new run continues. This management knows no web framework: the conflict is an
-# ordinary exception that the route translates into HTTP 409. Otherwise the
-# dataset script, which calls `run` directly, would drag the web application in
-# with it.
+# ordinary exception that the route translates into HTTP 409.
 #
 # The German strings below are user-visible messages and stay German on purpose.
 
