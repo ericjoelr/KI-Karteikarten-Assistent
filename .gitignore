@@ -12,7 +12,7 @@ wheels/
 # Secrets
 .env
 
-# Kartenbestand (Prüfstatus + Datensatz-Läufe inkl. Folienbilder)
+# Kartenbestand (generierte Karten + Prüfstatus)
 data/cards/
 
 # archify

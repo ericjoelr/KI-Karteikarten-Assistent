@@ -57,7 +57,7 @@ make run
 Das Frontend öffnet sich unter http://localhost:8501.
 
 Im Frontend ein PDF hochladen (oder nach `data/pdf/` legen), eine Folie wählen und
-**Karten erzeugen** klicken. 
+**Karten generieren** klicken. 
 Um Karten nach Anki zu exportieren, muss die Anwendung mit installiertem AnkiConnect im Hintergrund aktiv sein.
 
 ## Projektstruktur
