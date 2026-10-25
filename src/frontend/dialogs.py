@@ -223,8 +223,8 @@ def batch_dialog():
     """Generates the cards of every slide that has none yet, one after another.
 
     Each slide goes through the same /generate as a single slide and is stored
-    right away — so closing the dialog stops the loop without losing anything,
-    and a new start picks up the slides that are still open.
+    right away — so stopping the loop loses nothing, and a new start picks up
+    the slides that are still open.
     """
     pdf_name = st.session_state.pdf_name
     graphics = st.session_state.graphics_enabled
@@ -241,6 +241,9 @@ def batch_dialog():
     if not st.button("🚀 Lauf starten", type="primary", disabled=not pages):
         return
 
+    # Any click makes Streamlit rerun the script, which ends the loop below
+    # after the slide in flight. Closing the dialog does not: it is no rerun.
+    st.button("⏹️ Abbrechen")
     progress = st.progress(0.0)
     for done, page in enumerate(pages):
         progress.progress(done / len(pages), text=f"Folie {page} ({done} von {len(pages)} erzeugt)")
