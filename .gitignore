@@ -12,21 +12,11 @@ wheels/
 # Secrets
 .env
 
-# Debug-Ausgaben der Grafik-Extraktion
-data/debug_graphics/
-
 # Kartenbestand (Prüfstatus + Datensatz-Läufe inkl. Folienbilder)
 data/cards/
 
-# Fertiger Trainingsdatensatz (aus data/cards/dataset/ erzeugt)
-data/training/
-
-#PDFs
-data/pdf/
-
-# Issues und PRDs des lokalen Issue-Trackers
-.scratch/
-
+# archify
+.archify/
 
 # macOS
 .DS_Store

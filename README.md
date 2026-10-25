@@ -10,7 +10,7 @@ Ein multimodales LLM liest jede Folie samt extrahierter Grafiken und liefert sch
 
 Aus einem Foliensatz gute Karteikarten zu erstellen, kostet Stunden. Inhalt ansehen, eine Frage für die Vorderseite überlegen, den Inhalt auf die Rückseite schreiben, sich mit Diagrammen, mathematischen Formeln oder Tabelle rumschlagen... all das kostet wertvolle Zeit die besser für das Lernen genutzt werden kann.
 
-LLMs können den Kartenerstellungsprozess massiv beschleunigen damit mehr Zeit zum Lernen bleibt. Doch reine Text-Extraktion verliert genau das, was Folien ausmacht: Diagramme, Tabellen, Formeln. Dieses Projekt gibt dem Modell deshalb das **Bild** jeder Folie, lässt Grafiken aus den Folien direkt in die Karten übernehmen und lässt den Nutzer die Karten bewerten, sodass nur validierte Karten wirklich gelernt werden.
+LLMs können den Kartenerstellungsprozess massiv beschleunigen damit mehr Zeit zum Lernen bleibt. Doch reine Text-Extraktion verliert genau das, was Folien ausmacht: Diagramme, Tabellen, Formeln. Dieses Projekt gibt dem Modell deshalb das Bild jeder Folie, lässt Grafiken aus den Folien direkt in die Karten übernehmen und lässt den Nutzer die Karten bewerten, sodass nur validierte Karten wirklich gelernt werden.
 
 Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für diese Aufgabe trainiertes Modell (lokal nur mit Apple Silicon). So bleiben die Folien auf deinem Rechner, du kannst den Assistenten auch offline nutzen und du hast keine API-Kosten.
 
@@ -20,7 +20,7 @@ Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für dies
 
 ## Architektur
 
-![Verarbeitungsfluss: Folie aus dem PDF über das Vision-Text-Modell zu geprüften Karten in Anki](docs/readme_graphics/architektur.webp)
+![Verarbeitungsfluss: Vorlesungs-PDF über Streamlit-Frontend, FastAPI-Backend und Vision-LLM zu geprüften Karten in Anki](docs/readme_graphics/architektur.webp)
 
 ## Quickstart
 
@@ -48,6 +48,7 @@ Um Karten nach Anki zu exportieren, muss die Anwendung mit installiertem AnkiCon
 ## Projektstruktur
 
 ```
+data/                 Vorlesungsskripte als PDFs und erstellte Karten
 src/backend/          PDF-Verarbeitung, Kartengenererierung und -Speicherung sowie die Anki Schnittstelle
 src/backend/prompts/  System-Prompts
 src/frontend/         Streamlit-Oberfläche
