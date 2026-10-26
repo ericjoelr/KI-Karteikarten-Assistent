@@ -28,16 +28,7 @@ Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für dies
 
 - [uv](https://docs.astral.sh/uv/) (installiert Python 3.13 selbst)
 - [Anki](https://apps.ankiweb.net/) mit dem Add-on [AnkiConnect](https://ankiweb.net/shared/info/2055492159)
-- **Eines** der folgenden Modell-Backends:
-  - **Cloud-Anbieter** mit OpenAI-kompatibler API, einem Vision-LLM und Unterstützung für
-    `json_schema`-Ausgabe, z. B. Google Gemini. In der `.env`: `CLOUD_API_KEY` und `PROVIDER_API_KEY` setzen.
-  - **llama.cpp** mit einem eigenen Vision-Modell im Hugging-Face-Cache.
-    In der `.env`: `LLAMACPP_SERVER=/pfad/zu/llama-server` setzen.
-  - **Das feinabgestimmte Modell** über MLX (nur Apple Silicon, ca. 5 GB Download):
-    [LoRA-Adapter auf Hugging Face](https://huggingface.co/ericjoelr/qwen3-vl-4b-karteikarten-lora-mlx)
-    für Qwen3-VL-4B. Einrichtung mit einem Befehl, siehe unten — keine `.env`-Einträge nötig.
-
-Die lokalen Server startet die Anwendung selbst, sobald in der Oberfläche ein Modell aktiviert wird.
+- Eine der drei Modell-Optionen unten
 
 ### Installation
 
@@ -45,18 +36,47 @@ Die lokalen Server startet die Anwendung selbst, sobald in der Oberfläche ein M
 git clone https://github.com/ericjoelr/KI-Karteikarten-Assistent.git
 cd KI-Karteikarten-Assistent
 uv sync
-cp .env.example .env          # Werte für das gewählte Modell-Backend eintragen
 ```
 
-Optional, für das feinabgestimmte lokale Modell (installiert `mlx-vlm` und lädt Basismodell und
-Adapter nach `models/`):
+Eine `.env` muss nicht angelegt werden: Anbieter, Modell und API-Key werden in der Oberfläche gewählt,
+die sie selbst in die `.env` schreibt (von Git ignoriert).
+
+### Modell einrichten
+
+| Option | Läuft auf | Einrichtung |
+| --- | --- | --- |
+| **Cloud**, z. B. Google Gemini | jedem Rechner, braucht einen API-Key | Key in der Oberfläche |
+| **Feinabgestimmtes Modell** (MLX) | Apple Silicon mit mind. 16 GB Unified Memory | `make mlx` |
+| **llama.cpp** mit eigenem Vision-Modell | Modellabhängig | `llama-server` im PATH |
+
+#### Cloud
+
+Ein Anbieter mit OpenAI-kompatibler API, einem Vision-LLM und Unterstützung für
+`json_schema`-Ausgabe. URL und API-Key werden beim Aktivieren im Modell-Dialog eingetragen;
+voreingestellt ist die URL von Google Gemini.
+
+#### Feinabgestimmtes Modell (MLX)
+
+Qwen3-VL-4B mit dem eigenen
+[LoRA-Adapter von Hugging Face](https://huggingface.co/ericjoelr/qwen3-vl-4b-karteikarten-lora).
+Die Folien verlassen den Rechner nicht.
+
+**Systemanforderungen:** Mac mit Apple Silicon, mindestens 16 GB Unified Memory
+(gemessen: ca. 9 GB Spitzenbedarf beim Generieren), ca. 6 GB freier Speicherplatz.
 
 ```bash
 make mlx
 ```
 
-Danach in der Oberfläche über den Modell-Knopf den Anbieter **MLX** wählen, **Verfügbare Modelle anzeigen**
-klicken und den Adapter **Aktivieren**.
+Der Befehl installiert `mlx-vlm` und lädt Basismodell und Adapter.
+
+#### llama.cpp
+
+Ein eigenes Vision-Modell im Hugging-Face-Cache und `llama-server` im PATH (z. B. per
+`brew install llama.cpp`). Liegt er woanders, in einer `.env` `LLAMACPP_SERVER=/pfad/zu/llama-server`
+setzen (Vorlage: `.env.example`).
+
+### Starten
 
 Backend und Frontend zusammen starten (Strg+C beendet beide):
 
@@ -66,9 +86,10 @@ make run
 
 Das Frontend öffnet sich unter http://localhost:8501.
 
-Im Frontend ein PDF hochladen (oder nach `data/pdf/` legen), eine Folie wählen und
-**Karten generieren** klicken. 
-Um Karten nach Anki zu exportieren, muss die Anwendung mit installiertem AnkiConnect im Hintergrund aktiv sein.
+1. Über den Modell-Knopf den Anbieter wählen, **Verfügbare Modelle anzeigen** klicken und ein Modell
+   **Aktivieren**. Lokale Server startet die Anwendung dabei selbst.
+2. Ein PDF hochladen (oder nach `data/pdf/` legen), eine Folie wählen und **Karten generieren** klicken.
+3. Für den Export nach Anki muss Anki mit AnkiConnect im Hintergrund laufen.
 
 ## Projektstruktur
 
@@ -95,7 +116,7 @@ Um Karten nach Anki zu exportieren, muss die Anwendung mit installiertem AnkiCon
 ├── tests/                      pytest: API-Routen, Kartenbestand, LLM-Anfrage, Modell-Anbieter
 ├── models/                     LoRA-Adapter des lokalen Modells (von make mlx angelegt)
 ├── docs/readme_graphics/       Bilder dieser README
-├── .env.example                Vorlage für die Konfiguration
+├── .env.example                Optionale Einstellungen (die .env legt die Oberfläche selbst an)
 ├── Makefile                    make run: startet Backend und Frontend; make mlx: lokales Modell
 └── pyproject.toml              Abhängigkeiten und Tool-Konfiguration (uv, ruff)
 ```
