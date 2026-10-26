@@ -33,9 +33,9 @@ Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für dies
     `json_schema`-Ausgabe, z. B. Google Gemini. In der `.env`: `CLOUD_API_KEY` und `PROVIDER_API_KEY` setzen.
   - **llama.cpp** mit einem eigenen Vision-Modell im Hugging-Face-Cache.
     In der `.env`: `LLAMACPP_SERVER=/pfad/zu/llama-server` setzen.
-  - **MLX-Server** (`mlx_vlm.server`, nur Apple Silicon) mit einem eigenen LoRA-Adapter.
-    In der `.env`: `MLX_SERVER=/pfad/zu/mlx_vlm.server` und `MLX_ADAPTERS_DIR=/pfad/zu/adaptern`
-    (ein Unterordner pro Adapter).
+  - **Das feinabgestimmte Modell** über MLX (nur Apple Silicon, ca. 5 GB Download):
+    [LoRA-Adapter auf Hugging Face](https://huggingface.co/ericjoelr/qwen3-vl-4b-karteikarten-lora-mlx)
+    für Qwen3-VL-4B. Einrichtung mit einem Befehl, siehe unten — keine `.env`-Einträge nötig.
 
 Die lokalen Server startet die Anwendung selbst, sobald in der Oberfläche ein Modell aktiviert wird.
 
@@ -47,6 +47,16 @@ cd KI-Karteikarten-Assistent
 uv sync
 cp .env.example .env          # Werte für das gewählte Modell-Backend eintragen
 ```
+
+Optional, für das feinabgestimmte lokale Modell (installiert `mlx-vlm` und lädt Basismodell und
+Adapter nach `models/`):
+
+```bash
+make mlx
+```
+
+Danach in der Oberfläche über den Modell-Knopf den Anbieter **MLX** wählen, **Verfügbare Modelle anzeigen**
+klicken und den Adapter **Aktivieren**.
 
 Backend und Frontend zusammen starten (Strg+C beendet beide):
 
@@ -83,9 +93,10 @@ Um Karten nach Anki zu exportieren, muss die Anwendung mit installiertem AnkiCon
 │       ├── dialogs.py          Dialoge: PDF, Anki-Deck, Modellwahl, alle Folien generieren
 │       └── api.py              Alle HTTP-Aufrufe ans Backend
 ├── tests/                      pytest: API-Routen, Kartenbestand, LLM-Anfrage, Modell-Anbieter
+├── models/                     LoRA-Adapter des lokalen Modells (von make mlx angelegt)
 ├── docs/readme_graphics/       Bilder dieser README
 ├── .env.example                Vorlage für die Konfiguration
-├── Makefile                    make run: startet Backend und Frontend
+├── Makefile                    make run: startet Backend und Frontend; make mlx: lokales Modell
 └── pyproject.toml              Abhängigkeiten und Tool-Konfiguration (uv, ruff)
 ```
 

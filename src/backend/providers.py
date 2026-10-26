@@ -121,8 +121,10 @@ def list_models(provider: str, *, base_url: str | None = None, api_key: str | No
             if "image" in m.get("architecture", {}).get("input_modalities", ["image"])
         ]
 
-    if settings.mlx_adapters_dir is None or not settings.mlx_adapters_dir.is_dir():
-        raise ProviderError("MLX_ADAPTERS_DIR ist nicht gesetzt oder existiert nicht.")
+    if not settings.mlx_adapters_dir.is_dir():
+        raise ProviderError(
+            f"Kein Adapter-Ordner {settings.mlx_adapters_dir} – erst `make mlx` ausführen."
+        )
     return sorted(
         p.name for p in settings.mlx_adapters_dir.iterdir()
         if (p / "adapters.safetensors").exists()

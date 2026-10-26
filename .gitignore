@@ -15,6 +15,9 @@ wheels/
 # Kartenbestand (generierte Karten + Prüfstatus)
 data/cards/
 
+# Lokales Modell (make mlx)
+models/
+
 # archify
 .archify/
 

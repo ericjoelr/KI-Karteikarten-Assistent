@@ -62,4 +62,4 @@ def test_mlx_listing_without_adapter_dir_is_a_readable_error(monkeypatch):
     resp = client.post("/providers/models", json={"provider": "mlx"})
 
     assert resp.status_code == 502
-    assert "MLX_ADAPTERS_DIR" in resp.json()["detail"]
+    assert "make mlx" in resp.json()["detail"]

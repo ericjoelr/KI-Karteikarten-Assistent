@@ -41,8 +41,8 @@ class Settings(BaseSettings):
     llamacpp_port: int = 9931
     mlx_server: str = "mlx_vlm.server"
     mlx_port: int = 9932
-    # One sub folder per LoRA adapter (the DL repo's models/ folder).
-    mlx_adapters_dir: Path | None = None
+    # One sub folder per LoRA adapter; `make mlx` downloads the published one here.
+    mlx_adapters_dir: Path = PROJECT_ROOT / "models"
     mlx_adapter: str = ""  # the active adapter's folder name
 
     # --- Graphics ---
