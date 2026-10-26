@@ -33,7 +33,7 @@ def test_generate_route_without_api_key_explains_instead_of_crashing(monkeypatch
         resp = client.post("/generate", json={"pdf_name": "x.pdf", "page": 1})
 
     assert resp.status_code == 400
-    assert "API-Key" in resp.json()["detail"]
+    assert "Modell-Knopf" in resp.json()["detail"]
     mock_llm.assert_not_called()
 
 

@@ -197,8 +197,8 @@ def generate(req: GenerateRequest) -> GenerateResponse:
         raise HTTPException(
             status_code=400,
             detail=(
-                "Kein API-Key hinterlegt. Bitte oben über den Anbieter-Knopf einen Key "
-                "eintragen oder CLOUD_API_KEY und PROVIDER_API_KEY in der .env setzen."
+                "Kein Modell aktiv. Bitte oben über den Modell-Knopf einen Anbieter "
+                "wählen und ein Modell aktivieren."
             ),
         )
 

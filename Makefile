@@ -13,5 +13,5 @@ run:
 mlx:
 	uv sync --extra mlx
 	uv run hf download mlx-community/Qwen3-VL-4B-Instruct-8bit
-	uv run hf download ericjoelr/qwen3-vl-4b-karteikarten-lora-mlx \
+	uv run hf download ericjoelr/qwen3-vl-4b-karteikarten-lora \
 		--local-dir models/qwen3-vl-4b-karteikarten-lora
