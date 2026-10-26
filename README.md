@@ -5,6 +5,7 @@ Ein multimodales LLM liest jede Folie samt extrahierter Grafiken und liefert sch
 
 ![Python 3.13](https://img.shields.io/badge/python-3.13-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+[![Hugging Face: LoRA-Adapter](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-LoRA--Adapter-yellow)](https://huggingface.co/ericjoelr/qwen3-vl-4b-karteikarten-lora)
 
 ## Der Mehrwert
 
@@ -12,7 +13,7 @@ Aus einem Foliensatz gute Karteikarten zu erstellen, kostet Stunden. Inhalt anse
 
 LLMs können den Kartenerstellungsprozess massiv beschleunigen damit mehr Zeit zum Lernen bleibt. Doch reine Text-Extraktion verliert genau das, was Folien ausmacht: Diagramme, Tabellen, Formeln. Dieses Projekt gibt dem Modell deshalb das Bild jeder Folie, lässt Grafiken aus den Folien direkt in die Karten übernehmen und lässt den Nutzer die Karten bewerten, sodass nur validierte Karten wirklich gelernt werden.
 
-Dies funktioniert mit Cloud Modellen als auch lokal mit einem speziell für diese Aufgabe trainiertes Modell (lokal nur mit Apple Silicon). So bleiben die Folien auf deinem Rechner, du kannst den Assistenten auch offline nutzen und du hast keine API-Kosten.
+Dies funktioniert mit Cloud Modellen als auch lokal mit einem [speziell für diese Aufgabe trainierten Modell](https://huggingface.co/ericjoelr/qwen3-vl-4b-karteikarten-lora) (lokal nur mit Apple Silicon). So bleiben die Folien auf deinem Rechner, du kannst den Assistenten auch offline nutzen und du hast keine API-Kosten.
 
 ## Die Oberfläche
 
